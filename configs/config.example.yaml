@@ -1,0 +1,51 @@
+# Example configuration for the Real-Time Weapon Detection and Alert System.
+# Copy to configs/config.yaml and edit. Secrets (Twilio/SMTP) are best supplied
+# via environment variables (see .env.example) rather than committed here.
+
+model:
+  # Path to YOLOv8 weights. Use a weapon-fine-tuned model (best.pt) for firearms.
+  # The default yolov8n.pt (COCO) only recognizes "knife", not guns.
+  weights: yolov8n.pt
+  confidence_threshold: 0.6
+  device: cpu            # "cpu", "cuda", "cuda:0", or "mps"
+  image_size: 640
+  weapon_classes:        # class names (case-insensitive) treated as weapons
+    - gun
+    - pistol
+    - rifle
+    - handgun
+    - knife
+    - weapon
+
+video:
+  source: "0"            # webcam index "0" or an RTSP/HTTP URL for an IP camera
+  frame_width: null
+  frame_height: null
+  fps_limit: null        # e.g. 15 to cap processing rate; null = unlimited
+  process_every_n_frames: 1
+
+alerts:
+  cooldown_seconds: 30   # minimum gap between successive alerts
+  sound_enabled: true
+  sound_file: null       # path to a .wav/.mp3 alarm; null = terminal bell
+  desktop_enabled: true
+  twilio:
+    enabled: false
+    # Prefer env vars: TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN / TWILIO_FROM_NUMBER / TWILIO_TO_NUMBER
+    account_sid: ""
+    auth_token: ""
+    from_number: ""
+    to_number: ""
+  email:
+    enabled: false
+    smtp_host: ""
+    smtp_port: 587
+    use_tls: true
+    username: ""
+    password: ""
+    from_address: ""
+    to_addresses: []
+
+storage:
+  evidence_dir: output/evidence
+  log_file: output/detections.csv

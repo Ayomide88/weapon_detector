@@ -40,3 +40,7 @@ output/
 datasets/
 data/images/
 data/labels/
+testdata/
+
+# Training runs (Ultralytics output)
+runs/

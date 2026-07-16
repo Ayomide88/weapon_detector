@@ -1,0 +1,21 @@
+# Core runtime dependencies for the weapon detection system.
+# For CPU-only PyTorch install from the PyTorch index, e.g.:
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+torch>=2.2,<2.4
+torchvision>=0.17,<0.19
+ultralytics>=8.1,<9
+opencv-python>=4.8
+numpy>=1.24,<2
+pandas>=2.0
+PyYAML>=6.0
+
+# Alerting / notifications
+twilio>=8.0
+plyer>=2.1
+# Optional audible-alarm playback. playsound is finicky to build on some
+# setuptools versions; the sound alert falls back to the terminal bell if it is
+# not installed. Install manually if you want file-based alarm playback:
+#   pip install "playsound==1.2.2"
+
+# GUI
+Pillow>=10.0
