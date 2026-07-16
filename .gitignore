@@ -40,3 +40,4 @@ output/
 datasets/
 data/images/
 data/labels/
+testdata/

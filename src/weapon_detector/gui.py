@@ -144,13 +144,25 @@ class WeaponDetectorGUI:
 
     def _render(self, result: FrameResult) -> None:
         self._photo = self._to_photo(result.frame, 640, 480)
-        self.video_label.configure(image=self._photo, text="")
+        # width/height were set in text units for the placeholder; once an image
+        # is shown tk treats them as pixels, so size the label to the image.
+        self.video_label.configure(
+            image=self._photo,
+            text="",
+            width=self._photo.width(),
+            height=self._photo.height(),
+        )
         if result.has_weapon:
             labels = ", ".join(sorted({d.label for d in result.detections}))
             conf = max(d.confidence for d in result.detections)
             self._log(f"Weapon detected: {labels} ({conf:.2f})")
             self._evidence_photo = self._to_photo(result.frame, 240, 180)
-            self.evidence_label.configure(image=self._evidence_photo, text="")
+            self.evidence_label.configure(
+                image=self._evidence_photo,
+                text="",
+                width=self._evidence_photo.width(),
+                height=self._evidence_photo.height(),
+            )
 
     def _on_close(self) -> None:
         self.stop()
