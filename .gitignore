@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+
+# Testing / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Model weights (large binaries) - keep out of git, distribute separately
+*.pt
+*.pth
+*.onnx
+*.engine
+
+# Runtime output (evidence images + detection logs)
+output/
+*.csv
+!tests/**/*.csv
+
+# Secrets / local config
+.env
+.env.local
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+
+# Datasets
+datasets/
+data/images/
+data/labels/
