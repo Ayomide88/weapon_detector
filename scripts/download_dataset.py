@@ -32,7 +32,70 @@ from __future__ import annotations
 
 import argparse
 import os
+import random
+import shutil
 import sys
+from pathlib import Path
+
+
+def _images_in(directory: Path) -> list[Path]:
+    exts = {".jpg", ".jpeg", ".png", ".bmp", ".webp"}
+    if not directory.is_dir():
+        return []
+    return [p for p in directory.iterdir() if p.suffix.lower() in exts]
+
+
+def _ensure_train_val_split(location: str, val_fraction: float = 0.15) -> None:
+    """Guarantee ``train``/``valid`` image folders and a matching ``data.yaml``.
+
+    Some Roboflow versions export a single flat folder (e.g. ``export/images`` +
+    ``export/labels``) with no split, whose ``data.yaml`` points at non-existent
+    ``train``/``val`` dirs. That fails training, so we build a split here.
+    """
+    import yaml
+
+    root = Path(location)
+    if _images_in(root / "train" / "images") and (
+        _images_in(root / "valid" / "images") or _images_in(root / "val" / "images")
+    ):
+        return  # already split by Roboflow
+
+    pool = next(
+        (d for d in (root / "export" / "images", root / "images") if _images_in(d)),
+        None,
+    )
+    if pool is None:
+        return  # nothing we can split; leave the download untouched
+    labels_dir = pool.parent / "labels"
+
+    images = sorted(_images_in(pool))
+    random.seed(42)
+    random.shuffle(images)
+    n_val = max(1, int(len(images) * val_fraction))
+    val = set(images[:n_val])
+
+    for split in ("train", "valid"):
+        (root / split / "images").mkdir(parents=True, exist_ok=True)
+        (root / split / "labels").mkdir(parents=True, exist_ok=True)
+    for img in images:
+        split = "valid" if img in val else "train"
+        shutil.copy(img, root / split / "images" / img.name)
+        label = labels_dir / (img.stem + ".txt")
+        if label.exists():
+            shutil.copy(label, root / split / "labels" / label.name)
+
+    data = {}
+    yaml_path = root / "data.yaml"
+    if yaml_path.exists():
+        data = yaml.safe_load(yaml_path.read_text()) or {}
+    data["train"] = "train/images"
+    data["val"] = "valid/images"
+    data.pop("test", None)
+    yaml_path.write_text(yaml.safe_dump(data, sort_keys=False))
+    print(
+        f"Split flat dataset into {len(images) - n_val} train / {n_val} val images "
+        f"and updated {yaml_path}."
+    )
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -98,6 +161,7 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     location = getattr(dataset, "location", args.location)
+    _ensure_train_val_split(location)
     print(f"\nDataset downloaded to: {location}")
     print(f"Train with:\n  python scripts/train.py --data {location}/data.yaml --epochs 50")
     return 0

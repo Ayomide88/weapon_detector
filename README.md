@@ -145,13 +145,16 @@ reports accuracy, and downloads `best.pt`. Copy that file into the project (e.g.
 
    ```bash
    pip install -e ".[train]"          # installs the roboflow client
+   export ROBOFLOW_API_KEY=...        # from https://app.roboflow.com -> Settings -> API
+   # A verified public pistol dataset (~2,970 images, class name `pistol`):
    python scripts/download_dataset.py \
-     --url https://universe.roboflow.com/<workspace>/<project>/dataset/<version> \
+     --workspace joseph-nelson --project pistols --version 1 \
      --location datasets/weapons
    ```
 
-   This produces `datasets/weapons/data.yaml`. (Or prepare your own YOLO-format
-   dataset + YAML — see `data/weapon_dataset.example.yaml`.)
+   This produces `datasets/weapons/data.yaml`. (Or point `--url` at any other
+   Roboflow Universe dataset, or prepare your own YOLO-format dataset + YAML —
+   see `data/weapon_dataset.example.yaml`.)
 
 2. **Train** (auto-detects GPU/CPU):
 
