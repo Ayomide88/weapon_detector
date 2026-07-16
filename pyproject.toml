@@ -24,6 +24,8 @@ dependencies = [
 dev = ["pytest>=8.0", "pytest-cov>=5.0", "ruff>=0.5", "mypy>=1.10"]
 # Optional file-based alarm playback (falls back to terminal bell if absent).
 sound = ["playsound==1.2.2"]
+# Optional: download labelled weapon datasets from Roboflow for training.
+train = ["roboflow>=1.1"]
 
 [project.scripts]
 weapon-detector = "weapon_detector.cli:main"

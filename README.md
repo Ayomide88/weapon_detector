@@ -124,21 +124,50 @@ weapon-detector --headless --max-frames 100
 
 ## Training a weapon model
 
-The default COCO model does not detect firearms. Fine-tune YOLOv8 on a weapon
-dataset (e.g. Roboflow Universe, Kaggle):
+The default COCO model **cannot detect firearms** (it only has a generic `knife`
+class). To detect guns/pistols/rifles/knives reliably you must fine-tune YOLOv8
+on a labelled weapon dataset. Training needs a **GPU** — if you don't have one,
+use the included Google Colab notebook (free GPU).
 
-1. Prepare a dataset in YOLO format and a dataset YAML
-   (see `data/weapon_dataset.example.yaml`).
-2. Train:
+### Option A — Google Colab (recommended, no local GPU needed)
+
+Open `notebooks/train_weapon_model.ipynb` in
+[Google Colab](https://colab.research.google.com/), select a GPU runtime, and run
+the cells. It installs dependencies, downloads a dataset from Roboflow, trains,
+reports accuracy, and downloads `best.pt`. Copy that file into the project (e.g.
+`models/best.pt`).
+
+### Option B — Local machine (needs an NVIDIA GPU)
+
+1. **Get a dataset.** Grab a free labelled weapon dataset from
+   [Roboflow Universe](https://universe.roboflow.com) (search "weapon detection",
+   "pistol", "knife"). With a free [Roboflow API key](https://app.roboflow.com):
 
    ```bash
-   python scripts/train.py --data data/weapon_dataset.yaml --epochs 50 --imgsz 640
-   # equivalent to: yolo train model=yolov8n.pt data=... epochs=50 imgsz=640
+   pip install -e ".[train]"          # installs the roboflow client
+   python scripts/download_dataset.py \
+     --url https://universe.roboflow.com/<workspace>/<project>/dataset/<version> \
+     --location datasets/weapons
    ```
 
-3. Point the app at the resulting `runs/detect/<name>/weights/best.pt` via
-   `model.weights` (or `WD_MODEL_WEIGHTS`), and make sure `model.weapon_classes`
-   matches your dataset's class names.
+   This produces `datasets/weapons/data.yaml`. (Or prepare your own YOLO-format
+   dataset + YAML — see `data/weapon_dataset.example.yaml`.)
+
+2. **Train** (auto-detects GPU/CPU):
+
+   ```bash
+   python scripts/train.py --data datasets/weapons/data.yaml --epochs 50 --imgsz 640
+   ```
+
+3. **Use the model.** Point the app at the resulting
+   `runs/detect/weapon_yolov8/weights/best.pt`:
+
+   ```bash
+   weapon-detector --weights runs/detect/weapon_yolov8/weights/best.pt
+   ```
+
+   or set `model.weights` (or `WD_MODEL_WEIGHTS`) in your config. Make sure
+   `model.weapon_classes` matches your dataset's class names.
 
 ## Testing
 
