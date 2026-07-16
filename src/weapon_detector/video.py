@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sys
 import time
 from collections.abc import Iterator
 from types import TracebackType
@@ -24,6 +25,24 @@ def _parse_source(source: str) -> str | int:
         return source
 
 
+def _open_capture(source: str | int) -> cv2.VideoCapture:
+    """Open a capture, preferring backends that work reliably per platform.
+
+    On Windows the default MSMF backend often fails sustained webcam capture
+    ("can't grab frame" errors), so integer (webcam) sources are opened with
+    DirectShow first, falling back to MSMF and then the default backend.
+    """
+    backends: list[int] = []
+    if isinstance(source, int) and sys.platform.startswith("win"):
+        backends = [cv2.CAP_DSHOW, cv2.CAP_MSMF]
+    for backend in backends:
+        capture = cv2.VideoCapture(source, backend)
+        if capture.isOpened():
+            return capture
+        capture.release()
+    return cv2.VideoCapture(source)
+
+
 class VideoStream:
     """Wrapper around :class:`cv2.VideoCapture` with sane configuration.
 
@@ -36,7 +55,7 @@ class VideoStream:
 
     def open(self) -> VideoStream:
         source = _parse_source(self.config.source)
-        capture = cv2.VideoCapture(source)
+        capture = _open_capture(source)
         if not capture.isOpened():
             raise RuntimeError(f"Unable to open video source: {self.config.source!r}")
         if self.config.frame_width:
