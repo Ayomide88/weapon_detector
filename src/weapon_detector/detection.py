@@ -40,7 +40,14 @@ class WeaponDetector:
     def __init__(self, config: ModelConfig, model: _YOLOLike | None = None) -> None:
         self.config = config
         self._weapon_classes = {c.lower() for c in config.weapon_classes}
-        self._model = model if model is not None else self._load_model(config)
+        # Loaded lazily on first use so constructing the detector (and thus the
+        # GUI) is instant; the heavy torch/model load happens off the main thread.
+        self._model = model
+
+    def _get_model(self) -> _YOLOLike:
+        if self._model is None:
+            self._model = self._load_model(self.config)
+        return self._model
 
     @staticmethod
     def _load_model(config: ModelConfig) -> _YOLOLike:
@@ -53,14 +60,14 @@ class WeaponDetector:
 
     @property
     def class_names(self) -> dict[int, str]:
-        return dict(self._model.names)
+        return dict(self._get_model().names)
 
     def is_weapon_label(self, label: str) -> bool:
         return label.lower() in self._weapon_classes
 
     def detect(self, frame: NDArray[np.uint8]) -> list[Detection]:
         """Run detection on ``frame`` and return weapon detections above threshold."""
-        results = self._model(
+        results = self._get_model()(
             frame,
             verbose=False,
             conf=self.config.confidence_threshold,
