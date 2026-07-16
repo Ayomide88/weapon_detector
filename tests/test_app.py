@@ -65,6 +65,25 @@ def test_process_every_n_frames_skips(config, make_yolo, blank_frame):
     assert second.has_weapon is True
 
 
+def test_process_frame_survives_detector_error(config, blank_frame):
+    class ExplodingDetector:
+        def detect(self, frame):
+            raise RuntimeError("bad frame")
+
+    spy = SpyChannel()
+    app = WeaponDetectionApp(
+        config,
+        detector=ExplodingDetector(),
+        alert_manager=AlertManager([spy], cooldown_seconds=0),
+        evidence_store=EvidenceStore(config.storage.evidence_dir),
+        event_logger=EventLogger(config.storage.log_file),
+    )
+    result = app.process_frame(blank_frame)
+    assert result.has_weapon is False
+    assert result.alerted is False
+    assert spy.sent == []
+
+
 def test_run_consumes_stream(config, make_yolo, blank_frame, monkeypatch):
     import weapon_detector.app as app_module
 

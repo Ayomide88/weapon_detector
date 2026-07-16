@@ -64,7 +64,13 @@ class WeaponDetectionApp:
         if self._frame_index % step != 0:
             return FrameResult(frame=frame, detections=[])
 
-        detections = self.detector.detect(frame)
+        try:
+            detections = self.detector.detect(frame)
+        except Exception:
+            # A single malformed frame (occasionally produced by some webcam
+            # backends) must not take down a long-running monitoring session.
+            logger.exception("Detection failed on a frame; skipping it")
+            return FrameResult(frame=frame, detections=[])
         if not detections:
             return FrameResult(frame=frame, detections=[])
 
